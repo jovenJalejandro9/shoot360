@@ -61,7 +61,7 @@ function init(bundle, parent, options = {}) {
     r360.getDefaultLocation(),
   );
 
-  r360.compositor.setBackground('./static_assets/360_world.jpg');
+  r360.compositor.setBackground('./static_assets/background/beach.jpg');
 }
 
 window.React360 = {init};

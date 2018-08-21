@@ -6,24 +6,22 @@ import {
   Text,
   View,
   VrButton,
-  Animated, 
+  Animated,
   NativeModules
 } from 'react-360';
 import Entity from 'Entity';
 import AmbientLight from 'AmbientLight';
 import PointLight from 'PointLight';
-const {AudioModule} = NativeModules;
+import Boot from './components/Boot'
+const { AudioModule } = NativeModules;
 const AnimatedEntity = Animated.createAnimatedComponent(Entity);
 
-const NORMAL_SCORE = 1 
-const MEDIUM_SCORE = 2 
+
+const NORMAL_SCORE = 1
+const MEDIUM_SCORE = 2
 const HIGHT_SCORE = 4
 
 export default class Hello360 extends React.Component {
-  // state = {
-  //   count: 0
-  // }
-  // increment = () => { this.setState({ count: this.state.count + 1 }) }
 
   render() {
     return (
@@ -42,54 +40,42 @@ export default class Hello360 extends React.Component {
 };
 
 
-class ModelView extends React.Component {
+class SuzanneView extends React.Component {
   state = {
-    count: 0
-  }
-  increment = () => { 
-    this.setState({ count: this.state.count + 1 }) 
+    score: 0,
+    time: 10,
+    pause: false
   }
 
-  rotation = new Animated.Value(0);
+  rigthShoot = (score) => {
+    if (!this.state.pause) {
+      AudioModule.playOneShot({
+        source: asset('sound/pain1.wav'),
+      });
+      this.setState({ score: this.state.score + score })
+    }
+  }
+
+  playAgain = () => {
+    this.setState({
+      score: 0,
+      pause: false,
+      time: 5
+    })
+    this.componentDidMount()
+  }
+
+  componentDidMount() {
+    const interval = setInterval(() => {
+      this.setState({ time: this.state.time - 1 })
+      if (this.state.time === 0) {
+        clearInterval(interval)
+        this.setState({ pause: true })
+      };
+    }, 1000)
+  }
 
   render() {
-    return (
-      <View>
-        {/* <VrButton
-          onClick={this.increment}
-          style={styles.spaceBox}>
-          <Text style={styles.greeting}>
-          {`Count: ${this.state.count}`}
-          </Text>
-          </VrButton> */}
-        <AmbientLight intensity={1.0} color={'#ffffff'} />
-        <PointLight
-          intensity={0.4}
-          style={{ transform: [{ translate: [0, 4, -1] }] }}
-        />
-        <AnimatedEntity
-          style={{ transform: [{ rotateY: this.rotation }] }}
-          source={{ gltf2: asset('helmet/SciFiHelmet.gltf') }}
-        />
-      </View>
-    );
-  }
-}
-
-class SuzanneView extends React.Component {
-      state = {
-        score: 22
-      }
-  
-  rigthShoot = (score) => { 
-    AudioModule.playOneShot({
-      source: asset('sound/pain1.wav'),
-    });
-    console.log(score)
-    this.setState({ score: this.state.score + score }) 
-  }
-
-    render() {
     return (
       <View>
         <AmbientLight intensity={1.0} />
@@ -97,31 +83,20 @@ class SuzanneView extends React.Component {
           intensity={0.4}
           color={'#ffffff'}
         />
-
-      <VrButton
-        onClick = {() => {this.rigthShoot(NORMAL_SCORE)}}
-      >
-        <Entity
-          style={{ transform: [{ translate: [0, 0, -10] }] }}
-          source={{ gltf2: asset('suzanne/Suzanne.gltf') }}
+        <Boot
+          rigthShoot={this.rigthShoot}
+          position={[0, 0, -10]}
+          url={'suzanne/Suzanne.gltf'}
+          painScore={HIGHT_SCORE}
+        />
+        <Boot
+          rigthShoot={this.rigthShoot}
+          position={[-4, 0, -10]}
+          url={'helmet/SciFiHelmet.gltf'}
+          painScore={NORMAL_SCORE}
         />
 
-        <Entity
-          style={{ transform: [{ translate: [-4, 0, -10] }] }}
-          source={{ gltf2: asset('helmet/SciFiHelmet.gltf') }}
-          />
-        </VrButton>
-
-
-        <View>
-          {/* <View style={
-            {
-              transform: [{ translate: [4, 0, -10] }],
-              width: 10,
-              height: 10,
-              backgroundColor: 'green'
-            }
-          }> */}          
+        {!this.state.pause && <View>
           <Text style={
             {
               transform: [{ translate: [4, 0, -10] }],
@@ -133,10 +108,53 @@ class SuzanneView extends React.Component {
           }>
             {`Count: ${this.state.score}`}
           </Text>
-        </View>
+        </View>}
+        {!this.state.pause && <View>
+          <Text style={
+            {
+              transform: [{ translate: [4, -0.5, -10] }],
+              width: 5,
+              height: 1,
+              fontSize: 0.5,
+              backgroundColor: 'red'
+            }
+          }>
+            {`Time: ${this.state.time}`}
+          </Text>
+        </View>}
+        {this.state.pause && <View>
+          <Text style={
+            {
+              transform: [{ translate: [0, 5, -9] }],
+              width: 5,
+              height: 5,
+              fontSize: 0.5,
+              backgroundColor: 'blue'
+            }
+          }>
+            {`Fin del juego \n`}
+            {`Puntuación: ${this.state.score}\n`}
+          </Text>
+          <VrButton
+            onClick={this.playAgain}
+          >
+            <Text
+              style={
+                {
+                  transform: [{ translate: [0, 5, -9] }],
+                  width: 5,
+                  height: 1,
+                  fontSize: 0.5,
+                  backgroundColor: 'green'
+                }
+              }
+            >
+              {`Volver a jugar`}
+            </Text>
+          </VrButton>
+        </View>}
       </View>
 
-      // </View>
     );
   }
 }
@@ -173,5 +191,4 @@ const styles = StyleSheet.create({
 });
 
 AppRegistry.registerComponent('Hello360', () => Hello360);
-AppRegistry.registerComponent('ModelView', () => ModelView);
 AppRegistry.registerComponent('SuzanneView', () => SuzanneView);
